@@ -1,4 +1,4 @@
-// Александров Дмитрий 21ПМ 
+// РђР»РµРєСЃР°РЅРґСЂРѕРІ Р”РјРёС‚СЂРёР№ 21РџРњ 
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -14,13 +14,13 @@
 
 std::mutex mtx;
 
-//проверка, является ли символ разделителем
+//РїСЂРѕРІРµСЂРєР°, СЏРІР»СЏРµС‚СЃСЏ Р»Рё СЃРёРјРІРѕР» СЂР°Р·РґРµР»РёС‚РµР»РµРј
 bool isDelimiter(wchar_t c) {
     static const std::wstring delimiters = L" \t\n.,;!?()[]{}<>/\"'";
     return delimiters.find(c) != std::wstring::npos;
 }
 
-//преобразование UTF-8 в UTF-16 (wstring)
+//РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёРµ UTF-8 РІ UTF-16 (wstring)
 std::wstring utf8_to_wstring(const std::string& str) {
     if (str.empty()) return std::wstring();
 
@@ -30,7 +30,7 @@ std::wstring utf8_to_wstring(const std::string& str) {
     return wstrTo;
 }
 
-//обработка блока текста
+//РѕР±СЂР°Р±РѕС‚РєР° Р±Р»РѕРєР° С‚РµРєСЃС‚Р°
 void processBuffer(const std::wstring& buffer, std::shared_ptr<std::wstring> longestWord, std::atomic<size_t>& wordCount) {
     std::wstring currentWord;
 
@@ -41,7 +41,7 @@ void processBuffer(const std::wstring& buffer, std::shared_ptr<std::wstring> lon
             if (!currentWord.empty()) {
                 ++wordCount;
                 if (currentWord.length() > longestWord->length()) {
-                    *longestWord = currentWord;  //используем указатель на строку
+                    *longestWord = currentWord;  //РёСЃРїРѕР»СЊР·СѓРµРј СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЃС‚СЂРѕРєСѓ
                 }
                 currentWord.clear();
             }
@@ -51,7 +51,7 @@ void processBuffer(const std::wstring& buffer, std::shared_ptr<std::wstring> lon
         }
     }
 
-    //если последнее слово не завершено, добавляем его
+    //РµСЃР»Рё РїРѕСЃР»РµРґРЅРµРµ СЃР»РѕРІРѕ РЅРµ Р·Р°РІРµСЂС€РµРЅРѕ, РґРѕР±Р°РІР»СЏРµРј РµРіРѕ
     if (!currentWord.empty()) {
         ++wordCount;
         if (currentWord.length() > longestWord->length()) {
@@ -60,7 +60,7 @@ void processBuffer(const std::wstring& buffer, std::shared_ptr<std::wstring> lon
     }
 }
 
-//асинхронное чтение файла с параллельной обработкой
+//Р°СЃРёРЅС…СЂРѕРЅРЅРѕРµ С‡С‚РµРЅРёРµ С„Р°Р№Р»Р° СЃ РїР°СЂР°Р»Р»РµР»СЊРЅРѕР№ РѕР±СЂР°Р±РѕС‚РєРѕР№
 void readAndProcessFile(const std::wstring& filename, std::shared_ptr<std::wstring> longestWord, std::atomic<size_t>& wordCount) {
     std::ifstream file(filename, std::ios::binary);
     if (!file.is_open()) {
@@ -68,7 +68,7 @@ void readAndProcessFile(const std::wstring& filename, std::shared_ptr<std::wstri
         return;
     }
 
-    const size_t bufferSize = 16 * 1024 * 1024;  // буфер в 16 МБ
+    const size_t bufferSize = 16 * 1024 * 1024;  // Р±СѓС„РµСЂ РІ 16 РњР‘
     std::vector<char> buffer(bufferSize);
     std::vector<std::future<void>> futures;
 
@@ -77,36 +77,36 @@ void readAndProcessFile(const std::wstring& filename, std::shared_ptr<std::wstri
         std::streamsize charsRead = file.gcount();
 
         if (charsRead > 0) {
-            //преобразуем прочитанный буфер из UTF-8 в UTF-16 (wstring)
+            //РїСЂРµРѕР±СЂР°Р·СѓРµРј РїСЂРѕС‡РёС‚Р°РЅРЅС‹Р№ Р±СѓС„РµСЂ РёР· UTF-8 РІ UTF-16 (wstring)
             std::wstring wbuffer = utf8_to_wstring(std::string(buffer.data(), charsRead));
-            //создаем поток для обработки сегмента файла
+            //СЃРѕР·РґР°РµРј РїРѕС‚РѕРє РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё СЃРµРіРјРµРЅС‚Р° С„Р°Р№Р»Р°
             futures.push_back(std::async(std::launch::async, processBuffer, wbuffer, longestWord, std::ref(wordCount)));
         }
     }
 
     for (auto& f : futures) {
-        f.get();  //ожидаем завершения всех потоков
+        f.get();  //РѕР¶РёРґР°РµРј Р·Р°РІРµСЂС€РµРЅРёСЏ РІСЃРµС… РїРѕС‚РѕРєРѕРІ
     }
 
     file.close();
 }
 
-//функция для открытия диалогового окна проводника и выбора файла
+//С„СѓРЅРєС†РёСЏ РґР»СЏ РѕС‚РєСЂС‹С‚РёСЏ РґРёР°Р»РѕРіРѕРІРѕРіРѕ РѕРєРЅР° РїСЂРѕРІРѕРґРЅРёРєР° Рё РІС‹Р±РѕСЂР° С„Р°Р№Р»Р°
 std::wstring openFileDialog() {
-    wchar_t filename[MAX_PATH] = L"";  //массив для хранения выбранного пути к файлу
+    wchar_t filename[MAX_PATH] = L"";  //РјР°СЃСЃРёРІ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РІС‹Р±СЂР°РЅРЅРѕРіРѕ РїСѓС‚Рё Рє С„Р°Р№Р»Сѓ
 
-    OPENFILENAMEW ofn;                 //структура для настройки диалогового окна
-    ZeroMemory(&ofn, sizeof(ofn));     //обнуляем память структуры
-    ofn.lStructSize = sizeof(ofn);     //Размер структуры
-    ofn.hwndOwner = NULL;              //владелец окна, NULL для консольных приложений
-    ofn.lpstrFilter = L"Text Files\0*.txt\0All Files\0*.*\0";  //фильтр для отображаемых файлов
-    ofn.lpstrFile = filename;          //буфер для пути к файлу
-    ofn.nMaxFile = MAX_PATH;           //максимальная длина пути
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;  //настройки диалога
-    ofn.lpstrDefExt = L"txt";          //расширение по умолчанию
+    OPENFILENAMEW ofn;                 //СЃС‚СЂСѓРєС‚СѓСЂР° РґР»СЏ РЅР°СЃС‚СЂРѕР№РєРё РґРёР°Р»РѕРіРѕРІРѕРіРѕ РѕРєРЅР°
+    ZeroMemory(&ofn, sizeof(ofn));     //РѕР±РЅСѓР»СЏРµРј РїР°РјСЏС‚СЊ СЃС‚СЂСѓРєС‚СѓСЂС‹
+    ofn.lStructSize = sizeof(ofn);     //Р Р°Р·РјРµСЂ СЃС‚СЂСѓРєС‚СѓСЂС‹
+    ofn.hwndOwner = NULL;              //РІР»Р°РґРµР»РµС† РѕРєРЅР°, NULL РґР»СЏ РєРѕРЅСЃРѕР»СЊРЅС‹С… РїСЂРёР»РѕР¶РµРЅРёР№
+    ofn.lpstrFilter = L"Text Files\0*.txt\0All Files\0*.*\0";  //С„РёР»СЊС‚СЂ РґР»СЏ РѕС‚РѕР±СЂР°Р¶Р°РµРјС‹С… С„Р°Р№Р»РѕРІ
+    ofn.lpstrFile = filename;          //Р±СѓС„РµСЂ РґР»СЏ РїСѓС‚Рё Рє С„Р°Р№Р»Сѓ
+    ofn.nMaxFile = MAX_PATH;           //РјР°РєСЃРёРјР°Р»СЊРЅР°СЏ РґР»РёРЅР° РїСѓС‚Рё
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;  //РЅР°СЃС‚СЂРѕР№РєРё РґРёР°Р»РѕРіР°
+    ofn.lpstrDefExt = L"txt";          //СЂР°СЃС€РёСЂРµРЅРёРµ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 
-    if (GetOpenFileNameW(&ofn)) {      //открываем диалог выбора файла
-        return std::wstring(filename); //возвращаем путь к выбранному файлу
+    if (GetOpenFileNameW(&ofn)) {      //РѕС‚РєСЂС‹РІР°РµРј РґРёР°Р»РѕРі РІС‹Р±РѕСЂР° С„Р°Р№Р»Р°
+        return std::wstring(filename); //РІРѕР·РІСЂР°С‰Р°РµРј РїСѓС‚СЊ Рє РІС‹Р±СЂР°РЅРЅРѕРјСѓ С„Р°Р№Р»Сѓ
     }
     else {
         std::wcerr << L"No file selected or error occurred." << std::endl;
@@ -120,24 +120,24 @@ int main() {
     auto longestWord = std::make_shared<std::wstring>();
     std::atomic<size_t> wordCount(0); 
 
-    //выбираем файл через проводник
+    //РІС‹Р±РёСЂР°РµРј С„Р°Р№Р» С‡РµСЂРµР· РїСЂРѕРІРѕРґРЅРёРє
     std::wstring filename = openFileDialog();
     if (filename.empty()) {
         std::wcerr << L"No file selected." << std::endl;
         return 1;
     }
 
-    //начало замера времени
+    //РЅР°С‡Р°Р»Рѕ Р·Р°РјРµСЂР° РІСЂРµРјРµРЅРё
     auto start = std::chrono::high_resolution_clock::now();
 
-    //чтение и обработка файла
+    //С‡С‚РµРЅРёРµ Рё РѕР±СЂР°Р±РѕС‚РєР° С„Р°Р№Р»Р°
     readAndProcessFile(filename, longestWord, wordCount);
 
-    //конец замера времени
+    //РєРѕРЅРµС† Р·Р°РјРµСЂР° РІСЂРµРјРµРЅРё
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
 
-    //вывод результатов
+    //РІС‹РІРѕРґ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ
     std::wcout.imbue(std::locale("ru_RU.UTF-8"));
     std::wcout << L"Total number of words: " << wordCount.load() << std::endl; 
     std::wcout << L"Longest word: " << *longestWord << std::endl;
